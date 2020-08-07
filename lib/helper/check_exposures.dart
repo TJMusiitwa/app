@@ -64,6 +64,10 @@ Future<ExposureInfo> checkExposures() async {
 
   // Decompress and verify downloads
   keyFiles = await Future.wait(downloads.map((file) async {
+    if (Platform.isAndroid) {
+      return file.uri;
+    }
+
     var archive = ZipDecoder().decodeBytes(await file.readAsBytes());
     var first = archive.files[0];
     var second = archive.files[1];
@@ -83,6 +87,9 @@ Future<ExposureInfo> checkExposures() async {
 
   await GactPlugin.setExposureConfiguration(
       config['exposureNotificationConfiguration']);
+
+  await GactPlugin.setUserExplanation(
+      'You were in close proximity to someone who tested positive for COVID-19.');
 
   // Save all found exposures
   List<ExposureInfo> exposures;
@@ -106,10 +113,6 @@ Future<ExposureInfo> checkExposures() async {
 
   exposures.sort((a, b) => a.date.compareTo(b.date));
   var exposure = exposures.isNotEmpty ? exposures.last : null;
-
-  if (exposure != null) {
-    showExposureNotification(exposure);
-  }
 
   print('Done checking exposures!');
   return exposure;
